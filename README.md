@@ -23,17 +23,17 @@ If you find any problems with this script, please let me know! I'll try to solve
 				/exec/gpio edge 21 falling
 				/exec/gpio edge 21 both
 
-	inv			Sets a GPIO pin's 'active_low' value. If this is 1, the pin's value is essentially inverted.
+	inv		Sets a GPIO pin's 'active_low' value. If this is 1, the pin's value is essentially inverted.
 				/exec/gpio inv 21 0
 				/exec/gpio inv 21 1
 
-	dir			Sets a GPIO pin's direction as either input or output.
+	dir		Sets a GPIO pin's direction as either input or output.
 				/exec/gpio dir 21 in
 				/exec/gpio dir 21 out
 
-	set			Sets the value of a GPIO pin either high (1) or low (0).
+	set		Sets the value of a GPIO pin either high (1) or low (0).
 				/exec/gpio set 21 0
 				/exec/gpio set 21 1
 
-	get			Displays the current value of a GPIO pin.
+	get		Displays the current value of a GPIO pin.
 				/exec/gpio get 21
