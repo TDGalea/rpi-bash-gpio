@@ -2,7 +2,7 @@
 
 ####################################################################################################################
 # Raspberry Pi GPIO interface script by Thomas Galea.                                                              #
-# Version 1.0                                                                                                      #
+# Version 1.1                                                                                                      #
 #                                                                                                                  #
 # Feel free to use this script however you want. Take it, use it, modify it, improve it, learn from it.            #
 # I simply ask that you keep my name in here if you plan to further share it!                                      #
@@ -10,17 +10,12 @@
 # If you find any problems with this script, please let me know! I'll try to solve any issues as soon as possible. #
 ####################################################################################################################
 
-# Ensure this is a Raspberry Pi.
-# This may not be a perfect method to check this:
-# If the Raspberry Pi Foundation ever changes the Model string in /proc/cpuinfo, this check may fail.
-# Please inform me if this is the case, or you have a better alternative to this.
-if [ "$(cat /proc/cpuinfo | grep 'Raspberry Pi')" = "" ];then
-	echo "This system is not a Raspberry Pi!"
-	echo "If you're using another board that you believe this script should work with, please let me know, and I'll modify the script to allow for your board."
-	exit 1
-fi
+# If you want to disable the Raspberry Pi check, change the below variable to 0:
+sysCheck=1
 
+# Shorthand GPIO path, solely because I'm lazy.
 gpio="/sys/class/gpio"
+
 # This string gives me nightmares. Colourisation is fun.
 helpCmdList="	\e[1;37m$0\e[0m [\e[1;32mlist\e[0m/\e[1;32mexport\e[0m/\e[1;32munexport\e[0m/\e[1;32medge\e[0m/\e[1;32minv\e[0m/\e[1;32mdir\e[0m/\e[1;32mset\e[0m/\e[1;32mget\e[0m] [\e[1;33mGPIO#\e[0m] [\e[1;36mvalue\e[0m]"
 
@@ -34,7 +29,7 @@ if [ "$1" = "" ];then
 	exit 0
 fi
 
-# Display basic help if parameter 1 doesn't match one from the below case list.
+# Ensure parameter 1 matches one of the valid commands.
 invalid=1
 case $1 in
 	    help) invalid=0;;
@@ -75,7 +70,7 @@ if [ "$1" = "help" ];then
 		echo -e "			\e[1;37m$0\e[0m \e[1;32medge \e[1;33m21 \e[1;36mfalling\e[0m"
 		echo -e "			\e[1;37m$0\e[0m \e[1;32medge \e[1;33m21 \e[1;36mboth\e[0m"
 		echo
-		echo -e "	\e[1;32minv\e[0m		Sets a GPIO pin's 'active_low' value. If this is 1, the pin's value is essentially inverted."
+		echo -e "	\e[1;32minv\e[0m		Sets a GPIO pin's 'active_low' value. If this is 1, the pin's value becomes inverted."
 		echo -e "			\e[1;37m$0\e[0m \e[1;32minv \e[1;33m21 \e[1;36m0\e[0m"
 		echo -e "			\e[1;37m$0\e[0m \e[1;32minv \e[1;33m21 \e[1;36m1\e[0m"
 		echo
@@ -93,6 +88,25 @@ if [ "$1" = "help" ];then
 	}
 	displayHelp | more
 	exit 0
+fi
+
+# Beyond here are functional commands, so now we should check that this system is a Raspberry Pi.
+#
+# This may not be a perfect method to check this;
+# If the Raspberry Pi Foundation ever changes the Model string in /proc/cpuinfo, this check may fail.
+# Please inform me if this is the case, or you have a better alternative to this.
+#
+# This check can be disabled by setting the above variable (sysCheck) to 0.
+if [ "$sysCheck" -gt "0" ];then
+	if [ "$(cat /proc/cpuinfo | grep 'Raspberry Pi')" = "" ];then
+		echo "This system is not a Raspberry Pi!"
+		echo "If this is incorrect, or you're using another board that you believe"
+		echo "this script should work with, please let me know."
+		echo
+		echo "If you'd rather disable this check altogether, you can edit this script,"
+		echo -e "and change the line '\e[1;37msysCheck=1\e[0m' to '\e[1;37msysCheck=0\e[0m'."
+		exit 1
+	fi
 fi
 
 # List
@@ -127,15 +141,22 @@ if [ "$1" = "export" ];then
 		echo "(Use '$0 help' for full command usage help)."
 		exit 2
 	else
-		# Export pin.
-		echo "$2" > $gpio/export;err=$?
-		# Check if success. If not, report.
-		if [ "$err" = "0" ];then
-			echo "Success."
-			exit 0
+		# Check that this pin isn't already exported.
+		if [ -d "$gpio/gpio$2" ];then
+			echo "That GPIO pin is already exported."
+			echo "If you want to reset it, please unexport it first, then you can export it again."
+			exit 1
 		else
-			echo "Failed to export pin. Ensure you've entered the command correctly, and that you have the required permissions."
-			exit $err
+			# Export pin.
+			echo "$2" > $gpio/export;err=$?
+			# Check if success. If not, report.
+			if [ "$err" = "0" ];then
+				echo "Success."
+				exit 0
+			else
+				echo "Failed to export pin. Ensure you've entered the command correctly, and that you have the required permissions."
+				exit $err
+			fi
 		fi
 	fi
 fi
@@ -148,15 +169,21 @@ if [ "$1" = "unexport" ];then
 		echo "(Use '$0 help' for full command usage help)."
 		exit 2
 	else
-		# Unexport pin.
-		echo "$2" > $gpio/unexport;err=$?
-		# Check if success. If not, report.
-		if [ "$err" = "0" ];then
-			echo "Success."
-			exit 0
+		# Ensure that this pin is currently exported.
+		if [ ! -d "$gpio/gpio$2" ];then
+			echo "That GPIO pin isn't currently exported."
+			exit 1
 		else
-			echo "Failed to unexport pin. Ensure you've entered the command correctly, and that you have the required permissions."
-			exit $err
+			# Unexport pin.
+			echo "$2" > $gpio/unexport;err=$?
+			# Check if success. If not, report.
+			if [ "$err" = "0" ];then
+				echo "Success."
+				exit 0
+			else
+				echo "Failed to unexport pin. Ensure you've entered the command correctly, and that you have the required permissions."
+				exit $err
+			fi
 		fi
 	fi
 fi
