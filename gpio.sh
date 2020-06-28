@@ -122,7 +122,7 @@ fi
 # Export
 if [ "$1" = "export" ];then
 	# Ensure parameter 2 is present.
-1	if [ "$2" = "" ];then
+	if [ "$2" = "" ];then
 		echo "Export what GPIO pin?"
 		echo "(Use '$0 help' for full command usage help)."
 		exit 2
