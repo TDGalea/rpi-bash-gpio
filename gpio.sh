@@ -2,7 +2,6 @@
 
 ####################################################################################################################
 # Raspberry Pi GPIO interface script by Thomas Galea.                                                              #
-# Version 1.1                                                                                                      #
 #                                                                                                                  #
 # Feel free to use this script however you want. Take it, use it, modify it, improve it, learn from it.            #
 # I simply ask that you keep my name in here if you plan to further share it!                                      #
@@ -10,10 +9,10 @@
 # If you find any problems with this script, please let me know! I'll try to solve any issues as soon as possible. #
 ####################################################################################################################
 
-# If you want to disable the Raspberry Pi check, change the below variable to 0:
+# If you want to disable the compatibility check, change the below variable to 0:
 sysCheck=1
 
-# Shorthand GPIO path, solely because I'm lazy.
+# Shorthand GPIO path. Change if your system has the GPIO files in another location.
 gpio="/sys/class/gpio"
 
 # This string gives me nightmares. Colourisation is fun.
@@ -90,18 +89,17 @@ if [ "$1" = "help" ];then
 	exit 0
 fi
 
-# Beyond here are functional commands, so now we should check that this system is a Raspberry Pi.
-#
-# This may not be a perfect method to check this;
-# If the Raspberry Pi Foundation ever changes the Model string in /proc/cpuinfo, this check may fail.
-# Please inform me if this is the case, or you have a better alternative to this.
+# Beyond here are functional commands, so now we should check that this script will actually work on this system.
 #
 # This check can be disabled by setting the above variable (sysCheck) to 0.
 if [ "$sysCheck" -gt "0" ];then
-	if [ "$(cat /proc/cpuinfo | grep 'Raspberry Pi')" = "" ];then
-		echo "This system is not a Raspberry Pi!"
-		echo "If this is incorrect, or you're using another board that you believe"
-		echo "this script should work with, please let me know."
+	if ! ls $gpio >/dev/null 2>&1;then
+		echo "This script is incompatible with your system."
+		echo -e "'\e[1;37m"$gpio"\e[0m' could not be found)."
+		echo
+		echo "If you know this is false, please let me know."
+		echo "If you know that the GPIO can be accessed elsewhere from within Bash, you can modify the script"
+		echo -e "and replace the line '\e[1;37mgpio=\""$gpio"\"\e[0m' with the correct path."
 		echo
 		echo "If you'd rather disable this check altogether, you can edit this script,"
 		echo -e "and change the line '\e[1;37msysCheck=1\e[0m' to '\e[1;37msysCheck=0\e[0m'."
